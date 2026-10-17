@@ -438,18 +438,14 @@ function renderResume(){
   const file='Constantinos_Craig_Resume.pdf';
   const b=el(`<h2 class="section" data-scramble>// resume</h2>
     <div id="rbody" class="muted">
-      <div class="ln"><span class="cyan">fetching</span> ${esc(file)} ...</div>
-      <div class="ln" style="margin-top:6px">if the download doesn't start,
-        <a href="${esc(file)}" download target="_blank" rel="noopener noreferrer">click here to grab the PDF</a>.</div>
-      <div class="ln" style="margin-top:8px;font-size:12px">ATS-friendly one/two-page PDF — the same background as this site, in a format a recruiter can file and forward.</div>
+      <div class="ln">read it right here in your browser, or grab the file:</div>
+      <div class="ln" style="margin-top:10px">
+        <a class="resbtn" href="${esc(file)}" target="_blank" rel="noopener noreferrer">view resume &rarr;</a>
+        <a class="resbtn alt" href="${esc(file)}" download>download PDF</a>
+      </div>
+      <div class="ln" style="margin-top:10px;font-size:12px">ATS-friendly PDF — the same background as this site, in a format a recruiter can read, file, or forward.</div>
     </div>`);
   log.appendChild(b); wireScramble(b); scrollDown();
-  // trigger the download via a same-origin anchor (no fetch, so CSP connect-src stays 'none')
-  try{
-    const a=document.createElement('a');
-    a.href=file; a.download=file; a.rel='noopener';
-    document.body.appendChild(a); a.click(); a.remove();
-  }catch(e){ /* the visible link above is the fallback */ }
 }
 function renderCreds(){
   const c=DATA.credentials;
@@ -471,7 +467,7 @@ function renderHelp(){
   const cmds=[
     ['about','who is craig'],['skills','skills by domain'],['projects','featured builds'],
     ['timeline','career journey'],['sysadmin','operations log'],['creds','certs, education, languages'],
-    ['casestudy','phishing campaign — spot the phish'],['resume','download my resume (PDF)'],['contact','get in touch'],['tools','live network & crypto utilities'],
+    ['casestudy','phishing campaign — spot the phish'],['resume','view / download my resume (PDF)'],['contact','get in touch'],['tools','live network & crypto utilities'],
     ['topology','interactive home-lab network map'],['ls / cd / cat','explore the filesystem'],['tree','map the current directory'],
     ['help','list commands'],
 
