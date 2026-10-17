@@ -14,7 +14,7 @@ const DATA = {
     tagline: "systems administration • infrastructure • security operations",
     location: "Lubbock, TX",
     availability: "Open to work",
-    experience: "4 years",
+    experience: "IT since 2024",            // hands-on IT from the 2024 Turo build; employed in IT from 2025 — matches the resume
     host: "portfolio",
   },
 
@@ -116,7 +116,7 @@ const DATA = {
     { yr: "Nov 2022",    ev: "Started studying cybersecurity",     de: "Self-guided study in Texas: SIEM (Splunk), Python, and SQL in lab settings." },
     { yr: "2024",        ev: "Built a small-business network",     de: "Set up the network and surveillance for a Turo car-rental fleet in Lubbock, Texas while running it as fleet manager. This is the project that moved me from retail into IT." },
     { yr: "2024",        ev: "Specialized in cybersecurity",       de: "Pivoted toward defensive security and monitoring." },
-    { yr: "Oct 2025 – Jul 2026", ev: "IT Generalist · IntouchCX",  de: "Athens, Greece. AD provisioning, M365, endpoint support, access control, and the 149-workstation office-floor build-out." },
+    { yr: "Oct 2025 – Jul 2026", ev: "IT Generalist / IT Support Technician · IntouchCX",  de: "Athens, Greece. AD provisioning, M365, endpoint support, access control, and the 149-workstation office-floor build-out." },
     { yr: "Jul 2026 – now", ev: "ICT Operations Engineer · Laskaridis Maritime", de: "Kifissia, Athens, Greece. Vessel networks, satellite connectivity, M365 / Entra / Intune, and fleet security" },
   ],
 
@@ -1047,6 +1047,7 @@ const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
     'security-plus.txt':{t:'f',x:"CompTIA Security+  —  2024"},
     'isc2-cc.txt':{t:'f',x:"ISC2 Certified in Cybersecurity (CC)  —  2024"},
     'google-cyber.txt':{t:'f',x:"Google Cybersecurity Certificate  —  2024"},
+    'google-it.txt':{t:'f',x:"Google IT Support Certificate  —  2024"},
     'htb.txt':{t:'f',x:"HTB CJCA  ->  CDSA  (in progress, defensive-analyst path)"},
   }},
   scripts:{t:'d',c:{
