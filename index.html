@@ -580,7 +580,7 @@ const DATA = {
   contact: [
     { ic: "email",    val: "constantinoscraig@gmail.com",   href: "mailto:constantinoscraig@gmail.com" },
     { ic: "linkedin", val: "linkedin.com/in/constantinoscraig", href: "https://www.linkedin.com/in/constantinoscraig" },
-    { ic: "location", val: "Athens, Greece",                href: "https://www.google.com/maps/search/?api=1&query=Athens,Greece" },
+    { ic: "location", val: "Athens, Greece" },
   ],
 
   hireMessages: [
@@ -855,8 +855,11 @@ function renderContact(){
   (async()=>{
     for(const c of DATA.contact){
       const row=document.createElement('div'); row.className='ln';
+      const field = c.href
+        ? `<a href="${esc(c.href)}" target="_blank" rel="noopener noreferrer"><span class="v"></span></a>`
+        : `<span class="v"></span>`;
       row.innerHTML=`<span class="ic">${esc(c.ic)}</span>
-        <a href="${esc(c.href)}" target="_blank" rel="noopener noreferrer"><span class="v"></span></a>
+        ${field}
         <button class="copybtn" data-copy="${esc(c.val)}">copy</button>`;
       body.appendChild(row);
       await typeInto(row.querySelector('.v'), c.val, 10); scrollDown();
