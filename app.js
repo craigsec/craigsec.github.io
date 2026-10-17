@@ -1462,7 +1462,8 @@ updateCursor();
 screen.addEventListener('click', e=>{ if(window.innerWidth>680 && e.target.closest('a,button,input,textarea')===null) input.focus(); });
 
 /* mobile command bar */
-['about','skills','projects','timeline','sysadmin','creds','casestudy','topology','resume','contact','tools','help'].forEach(n=>{
+/* order mirrors the resume: summary → skills → experience → projects → credentials → resume/contact, then site utilities */
+['about','skills','timeline','sysadmin','projects','casestudy','topology','creds','resume','contact','tools','help'].forEach(n=>{
   const btn=document.createElement('button'); btn.type='button'; btn.textContent=n;
   btn.addEventListener('click', ()=>run(n));
   $('#mobile-cmds').appendChild(btn);
