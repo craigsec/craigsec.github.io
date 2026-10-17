@@ -317,14 +317,17 @@ code.inl { background:#0e1a1a; border:1px solid var(--line); padding:1px 5px; bo
 #runbtn { display:none; }
 
 /* command bar — persistent shortcuts, pinned at the bottom on desktop and mobile */
-#mobile-cmds { display:flex; gap:8px; flex-wrap:wrap; max-width:900px; margin:8px auto 0; }
+#mobile-cmds { display:flex; gap:8px; flex-wrap:wrap; max-width:960px; margin:10px auto 0; }
 #mobile-cmds button { flex:0 0 auto; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--cyan);
-  font-family:var(--font-mono); font-size:12px; padding:7px 12px; border-radius:4px; cursor:pointer; letter-spacing:1px;
-  transition: background .12s, color .12s; }
+  font-family:var(--font-mono); font-size:12.5px; padding:8px 15px; border-radius:7px; cursor:pointer; letter-spacing:.5px;
+  transition: background .14s ease, color .14s ease, border-color .14s ease, box-shadow .14s ease, transform .14s ease; }
 #mobile-cmds button:hover,
-#mobile-cmds button:active { background:var(--cyan); color:var(--bg); }
+#mobile-cmds button:focus-visible { background:var(--cyan); color:var(--bg); border-color:var(--cyan);
+  box-shadow:var(--glow-cyan); transform:translateY(-1px); outline:none; }
+#mobile-cmds button:active { transform:translateY(0); box-shadow:none; }
 @media (max-width: 680px){
-  #mobile-cmds button{ flex:1 1 auto; padding:7px 4px; }
+  #mobile-cmds { gap:7px; }
+  #mobile-cmds button{ flex:1 1 auto; min-width:0; padding:11px 8px; font-size:12px; letter-spacing:.3px; border-radius:8px; }
   #bar .stat.hide-sm{display:none;}
 }
 
