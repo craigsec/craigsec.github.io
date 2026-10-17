@@ -438,12 +438,15 @@ function renderResume(){
   const file='Constantinos_Craig_Resume.pdf';
   const b=el(`<h2 class="section" data-scramble>// resume</h2>
     <div id="rbody" class="muted">
-      <div class="ln">read it right here in your browser, or grab the file:</div>
+      <div class="ln">rendering <span class="cyan">${esc(file)}</span> below &mdash; read it right here, no download needed:</div>
+      <div class="pdfwrap">
+        <iframe class="pdfframe" src="${esc(file)}#view=FitH" title="Constantinos Craig — resume (PDF)" loading="lazy"></iframe>
+      </div>
       <div class="ln" style="margin-top:10px">
-        <a class="resbtn" href="${esc(file)}" target="_blank" rel="noopener noreferrer">view resume &rarr;</a>
+        <a class="resbtn" href="${esc(file)}" target="_blank" rel="noopener noreferrer">open full page &rarr;</a>
         <a class="resbtn alt" href="${esc(file)}" download>download PDF</a>
       </div>
-      <div class="ln" style="margin-top:10px;font-size:12px">ATS-friendly PDF — the same background as this site, in a format a recruiter can read, file, or forward.</div>
+      <div class="ln" style="margin-top:8px;font-size:12px">ATS-friendly PDF — the same background as this site, in a format a recruiter can read, file, or forward.</div>
     </div>`);
   log.appendChild(b); wireScramble(b); scrollDown();
 }
