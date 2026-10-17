@@ -12,7 +12,7 @@ const DATA = {
     name: "CONSTANTINOS CRAIG",                      // display name
     role: "IT Operations Engineer",
     tagline: "systems administration • infrastructure • security operations",
-    location: "Athens, Greece",
+    location: "Lubbock, TX",
     availability: "Open to work",
     experience: "4 years",
     host: "portfolio",
@@ -138,7 +138,7 @@ const DATA = {
   contact: [
     { ic: "email",    val: "constantinoscraig@gmail.com",   href: "mailto:constantinoscraig@gmail.com" },
     { ic: "linkedin", val: "linkedin.com/in/constantinoscraig", href: "https://www.linkedin.com/in/constantinoscraig" },
-    { ic: "location", val: "Athens, Greece" },
+    { ic: "location", val: "Lubbock, TX" },
   ],
 
   hireMessages: [
@@ -432,6 +432,25 @@ function renderContact(){
     });
   })();
 }
+function renderResume(){
+  // The PDF is served from the repo root, next to index.html (same origin).
+  // Swap this filename if you rename the file in the repo.
+  const file='Constantinos_Craig_Resume.pdf';
+  const b=el(`<h2 class="section" data-scramble>// resume</h2>
+    <div id="rbody" class="muted">
+      <div class="ln"><span class="cyan">fetching</span> ${esc(file)} ...</div>
+      <div class="ln" style="margin-top:6px">if the download doesn't start,
+        <a href="${esc(file)}" download target="_blank" rel="noopener noreferrer">click here to grab the PDF</a>.</div>
+      <div class="ln" style="margin-top:8px;font-size:12px">ATS-friendly one/two-page PDF — the same background as this site, in a format a recruiter can file and forward.</div>
+    </div>`);
+  log.appendChild(b); wireScramble(b); scrollDown();
+  // trigger the download via a same-origin anchor (no fetch, so CSP connect-src stays 'none')
+  try{
+    const a=document.createElement('a');
+    a.href=file; a.download=file; a.rel='noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ /* the visible link above is the fallback */ }
+}
 function renderCreds(){
   const c=DATA.credentials;
   const li=a=>a.map(x=>`<li>${esc(x)}</li>`).join('');
@@ -452,7 +471,7 @@ function renderHelp(){
   const cmds=[
     ['about','who is craig'],['skills','skills by domain'],['projects','featured builds'],
     ['timeline','career journey'],['sysadmin','operations log'],['creds','certs, education, languages'],
-    ['casestudy','phishing campaign — spot the phish'],['contact','get in touch'],['tools','live network & crypto utilities'],
+    ['casestudy','phishing campaign — spot the phish'],['resume','download my resume (PDF)'],['contact','get in touch'],['tools','live network & crypto utilities'],
     ['topology','interactive home-lab network map'],['ls / cd / cat','explore the filesystem'],['tree','map the current directory'],
     ['help','list commands'],
 
@@ -1020,7 +1039,7 @@ function renderTopology(){
 /* ---------------- explorable filesystem (ls / cd / cat / tree) ---------------- */
 const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
   'readme.txt':{t:'f',x:"Constantinos Craig — IT Operations Engineer\n\nYou're poking around the filesystem. Nice instinct.\nTry: ls, cd projects, cat contact.txt, tree\nHidden files exist. ls -a won't help you, but curiosity will."},
-  'contact.txt':{t:'f',x:"email      constantinoscraig@gmail.com\nlinkedin   linkedin.com/in/constantinoscraig\nlocation   Athens, Greece"},
+  'contact.txt':{t:'f',x:"email      constantinoscraig@gmail.com\nlinkedin   linkedin.com/in/constantinoscraig\nlocation   Lubbock, TX"},
   projects:{t:'d',c:{
     'car-rental.md':{t:'f',x:"# Car Rental IT & Surveillance — Lubbock, TX (2024)\nVPN tunnel (site<->home), Hikvision NVR on a Proxmox VM, VLAN-isolated\ncameras, Synology NAS, UPS, dynamic DNS. The build that moved me into IT."},
     'enterprise-floor.md':{t:'f',x:"# Enterprise Floor Build-out — Athens (2025)\nPart of the team that stood up a 149-workstation floor + server room.\nHardware, cabling, endpoint installs, network validation, access control."},
@@ -1079,6 +1098,7 @@ const COMMANDS = {
   project: renderProjects, sysadmin: renderSysadmin, timeline: renderTimeline,
   contact: renderContact, banner: renderBanner, whoami: renderWhoami,
   creds: renderCreds, credentials: renderCreds, certs: renderCreds,
+  resume: renderResume, cv: renderResume, 'download': renderResume,
   clear: ()=>{ log.innerHTML=''; pinnedTop=null; renderBanner(); screen.scrollTop=0; },
   reboot: ()=>{ pinnedTop=null; runBoot(); }, restart: ()=>{ pinnedTop=null; runBoot(); },
   tools: renderTools, toolkit: renderTools,
@@ -1094,7 +1114,7 @@ const COMMANDS = {
   coffee: coffee, 'sudo make coffee': coffee, 'make coffee': coffee,
   exit: noExit, logout: noExit, quit: noExit,
 };
-const COMPLETIONS = ['help','about','skills','projects','sysadmin','timeline','creds','contact','tools','clear','banner','whoami','reboot','tools','casestudy','phishing','subnet','mac','port','hash','base64','passcheck','genpass','morse','uuid','epoch','cron','calc','color','cowsay','neofetch','nmap','ping','coffee','pwd','date','secret','topology','network','netmap','topo','ls','cd','cat','tree','sudo hire-craig'];
+const COMPLETIONS = ['help','about','skills','projects','sysadmin','timeline','creds','resume','cv','contact','tools','clear','banner','whoami','reboot','tools','casestudy','phishing','subnet','mac','port','hash','base64','passcheck','genpass','morse','uuid','epoch','cron','calc','color','cowsay','neofetch','nmap','ping','coffee','pwd','date','secret','topology','network','netmap','topo','ls','cd','cat','tree','sudo hire-craig'];
 
 function run(raw){
   const cmd = raw.trim(); if(!cmd) return;
@@ -1146,7 +1166,7 @@ updateCursor();
 screen.addEventListener('click', e=>{ if(window.innerWidth>680 && e.target.closest('a,button,input,textarea')===null) input.focus(); });
 
 /* mobile command bar */
-['about','skills','projects','timeline','sysadmin','creds','casestudy','topology','contact','tools','help'].forEach(n=>{
+['about','skills','projects','timeline','sysadmin','creds','casestudy','topology','resume','contact','tools','help'].forEach(n=>{
   const btn=document.createElement('button'); btn.type='button'; btn.textContent=n;
   btn.addEventListener('click', ()=>run(n));
   $('#mobile-cmds').appendChild(btn);
