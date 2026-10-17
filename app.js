@@ -471,7 +471,7 @@ function renderHelp(){
     ['about','who is craig'],['skills','skills by domain'],['projects','featured builds'],
     ['timeline','career journey'],['sysadmin','operations log'],['creds','certs, education, languages'],
     ['casestudy','phishing campaign — spot the phish'],['resume','view / download my resume (PDF)'],['contact','get in touch'],['tools','live network & crypto utilities'],
-    ['topology','interactive home-lab network map'],['ls / cd / cat','explore the filesystem'],['tree','map the current directory'],
+    ['topology','interactive home-lab network map'],['ls / cd / cat','explore the filesystem'],['tree','map the current directory'],['grep / history / man','poke around like a real shell'],
     ['help','list commands'],
 
     ['clear','wipe the screen'],['banner','show login banner'],['whoami','identity readout'],
@@ -480,7 +480,7 @@ function renderHelp(){
   const rows=cmds.map(([k,v])=>`<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
   const b=el(`<h2 class="section" data-scramble>// available commands</h2>
     <div class="cmd-grid">${rows}</div>
-    <div class="muted" style="margin-top:12px">↑/↓ history · Tab to autocomplete · or click a command in the bar below · psst: try <code class="inl">secret</code></div>`);
+    <div class="muted" style="margin-top:12px">↑/↓ history · Tab to autocomplete commands &amp; file paths · or click a command in the bar below · psst: try <code class="inl">secret</code></div>`);
   log.appendChild(b);
   wireScramble(b); scrollDown();
 }
@@ -871,6 +871,8 @@ const TOOLS = {
   morse: morseTool, cron: cronTool, crontab: cronTool,
   cowsay: cowsayTool,
   ls: cmdLs, cd: cmdCd, cat: cmdCat,
+  ssh: sshRun, tail: tailRun, sudo: sudoRun, 'mikrotik-export': mikrotikExport,
+  echo: echoRun, grep: grepRun, man: manRun, uname: unameRun, rm: rmTool,
 };
 
 /* keystroke-monitoring awareness demo — consensual, sandboxed, nothing stored or sent.
@@ -1037,7 +1039,7 @@ function renderTopology(){
 
 /* ---------------- explorable filesystem (ls / cd / cat / tree) ---------------- */
 const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
-  'readme.txt':{t:'f',x:"Constantinos Craig — IT Operations Engineer\n\nYou're poking around the filesystem. Nice instinct.\nTry: ls, cd projects, cat contact.txt, tree\nHidden files exist. ls -a won't help you, but curiosity will."},
+  'readme.txt':{t:'f',x:"Constantinos Craig — IT Operations Engineer\n\nYou're poking around the filesystem. Nice instinct.\nTry: ls, ls -la, cd /, cat /etc/motd, tree, grep, man ls\nHidden files exist — ls -a reveals them. Curiosity is the right instinct."},
   'contact.txt':{t:'f',x:"email      constantinoscraig@gmail.com\nlinkedin   linkedin.com/in/constantinoscraig\nlocation   Lubbock, TX"},
   projects:{t:'d',c:{
     'car-rental.md':{t:'f',x:"# Car Rental IT & Surveillance — Lubbock, TX (2024)\nVPN tunnel (site<->home), Hikvision NVR on a Proxmox VM, VLAN-isolated\ncameras, Synology NAS, UPS, dynamic DNS. The build that moved me into IT."},
@@ -1056,7 +1058,18 @@ const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
   }},
   '.bash_history':{t:'f',x:"ssh noc-jump\ntail -f /var/log/ops.log\nsudo pacman -Syu\nmikrotik-export > backup.rsc\nsudo hire-craig"},
   '.flag':{t:'f',x:"you read the hidden files. that's exactly the mindset this role needs.\nnow run:  sudo hire-craig"},
-}}}}};
+}}}},
+  etc:{t:'d',c:{
+    motd:{t:'f',x:"=== portfolio ===\nAuthorized use only. All activity on this host is logged.\n(Friendly note: this is Constantinos's portfolio box — poke around, be nice.)"},
+    hostname:{t:'f',x:"portfolio"},
+    'os-release':{t:'f',x:"NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nBUILD_ID=rolling\nHOME_URL=\"https://craigsec.github.io\""},
+  }},
+  var:{t:'d',c:{
+    log:{t:'d',c:{
+      'ops.log':{t:'f',x:"2026-10-17 06:12:04  intune    device-health report generated (all compliant)\n2026-10-17 06:30:11  m365      mailflow OK — 0 messages queued\n2026-10-17 07:02:55  mikrotik  vlan20 link up (sat-primary)\n2026-10-17 07:03:01  wan       failover armed: oneweb -> fleetxpress -> starlink -> 5g\n2026-10-17 08:15:42  defender  TVM scan complete — no critical findings\n2026-10-17 09:40:18  backup    nas snapshot ok (retention 30d)"},
+    }},
+  }},
+};
 let cwd=['home','craig'];
 function fsNode(parts){ let node={t:'d',c:FS}; for(const p of parts){ if(node.t!=='d'||!node.c[p]) return null; node=node.c[p]; } return node; }
 function fsResolve(path){ let parts;
@@ -1069,11 +1082,26 @@ function fsResolve(path){ let parts;
 function fsPath(parts){ if(parts[0]==='home'&&parts[1]==='craig'){ const r=parts.slice(2); return '~'+(r.length?'/'+r.join('/'):''); } return '/'+parts.join('/'); }
 function promptText(){ return 'craig@portfolio:'+fsPath(cwd)+'$'; }
 function updatePrompt(){ const ps=$('#inputline .ps2'); if(ps) ps.textContent=promptText(); }
-function cmdLs(arg){ const parts=fsResolve((arg||'').replace(/^-\S+\s*/,'').trim()); const node=fsNode(parts);
-  if(!node){ printOne('red',`ls: ${esc(arg)}: no such file or directory`); return; }
-  if(node.t==='f'){ printOne('muted', esc(arg)); return; }
-  const names=Object.keys(node.c).sort((a,z)=>a.localeCompare(z));
-  const html=names.map(n=>{ const ch=node.c[n]; const cls=ch.t==='d'?'cyan':((n.endsWith('.sh')||n.endsWith('.ps1'))?'green':'muted');
+function cmdLs(arg){
+  const a=(arg||'').trim();
+  const flagStr=(a.match(/(^|\s)-\S+/g)||[]).join('');
+  const showAll=/a/.test(flagStr), longFmt=/l/.test(flagStr);
+  const target=a.replace(/(^|\s)-\S+/g,'').trim();
+  const parts=fsResolve(target); const node=fsNode(parts);
+  if(!node){ printOne('red',`ls: cannot access '${esc(target)}': No such file or directory`); return; }
+  if(node.t==='f'){ printOne('muted', esc(target)); return; }
+  let names=Object.keys(node.c); if(!showAll) names=names.filter(n=>!n.startsWith('.'));
+  names.sort((x,z)=>x.localeCompare(z));
+  const isScript=n=>/\.(sh|ps1)$/.test(n);
+  if(longFmt){
+    const rows=names.map(n=>{ const ch=node.c[n]; const dir=ch.t==='d';
+      const perm=dir?'drwxr-xr-x':(isScript(n)?'-rwxr-xr-x':'-rw-r--r--');
+      const size=String(dir?4096:(ch.x?ch.x.length:0)).padStart(5);
+      const cls=dir?'cyan':(isScript(n)?'green':'muted');
+      return `${perm}  craig craig ${size}  <span class="${cls}">${esc(dir?n+'/':n)}</span>`; });
+    printPre(`total ${names.length}\n`+rows.join('\n')); return;
+  }
+  const html=names.map(n=>{ const ch=node.c[n]; const cls=ch.t==='d'?'cyan':(isScript(n)?'green':'muted');
     return `<span class="${cls}" style="display:inline-block;margin:0 20px 2px 0">${esc(ch.t==='d'?n+'/':n)}</span>`; }).join('');
   log.appendChild(el(`<div style="line-height:1.8">${html}</div>`)); scrollDown(); }
 function cmdCd(arg){ const t=(arg||'').trim()||'~'; const parts=fsResolve(t); const node=fsNode(parts);
@@ -1091,6 +1119,255 @@ function cmdTree(){ const node=fsNode(cwd), lines=[];
     names.forEach((nm,i)=>{ const last=i===names.length-1, ch=n.c[nm];
       lines.push(pre+(last?'└─ ':'├─ ')+nm+(ch.t==='d'?'/':'')); if(ch.t==='d') walk(ch, pre+(last?'   ':'│  ')); }); })(node,'');
   log.appendChild(el(`<div class="muted" style="white-space:pre;line-height:1.5">${esc(fsPath(cwd)+'\n'+lines.join('\n'))}</div>`)); scrollDown(); }
+
+/* ---------------- extra shell realism (all local, no network, output escaped) ----------------
+   Everything here is a static readout or operates on the in-memory FS above.
+   No fetch/XHR, no eval, no secrets — matches the page's locked-down CSP. */
+function printPre(html){ log.appendChild(el(`<div class="muted" style="white-space:pre-wrap;line-height:1.55">${html}</div>`)); scrollDown(); }
+function absPwd(){ const p=fsPath(cwd); return p==='~' ? '/home/craig' : p.replace(/^~/,'/home/craig'); }
+function expandVars(s){
+  const map={ USER:'craig', LOGNAME:'craig', HOME:'/home/craig', SHELL:'/bin/bash', HOSTNAME:'portfolio',
+    PWD:absPwd(), PATH:'/usr/local/sbin:/usr/local/bin:/usr/bin:/bin', LANG:'en_US.UTF-8', TERM:'xterm-256color' };
+  return String(s)
+    .replace(/\$\?/g,'0')
+    .replace(/\$\{?(\w+)\}?/g,(m,k)=> k==='RANDOM'?String(Math.floor(Math.random()*32768)):(k in map?map[k]:m));
+}
+function envText(){ return ['USER=craig','LOGNAME=craig','HOME=/home/craig','SHELL=/bin/bash','HOSTNAME=portfolio',
+  'PWD='+absPwd(),'PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin','LANG=en_US.UTF-8','TERM=xterm-256color'].join('\n'); }
+function histText(){ return history.slice().reverse().map((c,i)=>String(i+1).padStart(4)+'  '+c).join('\n'); }
+
+/* grep + the text-producing side of pipes */
+function textOf(cmd){
+  const c=cmd.trim(); const parts=c.split(/\s+/); const head=(parts[0]||'').toLowerCase(); const rest=c.slice(parts[0].length).trim();
+  if(head==='cat'){ const n=fsNode(fsResolve(rest)); return (n&&n.t==='f')?n.x:null; }
+  if(head==='ls'){ const tgt=rest.replace(/(^|\s)-\S+/g,'').trim(); const n=fsNode(fsResolve(tgt)); if(!n||n.t!=='d')return null;
+    const all=/(^|\s)-\S*a/.test(rest); let ks=Object.keys(n.c); if(!all)ks=ks.filter(k=>!k.startsWith('.')); return ks.sort().join('\n'); }
+  if(head==='history') return histText();
+  if(head==='env') return envText();
+  if(head==='echo') return expandVars(rest.replace(/^"([\s\S]*)"$/,'$1').replace(/^'([\s\S]*)'$/,'$1'));
+  return null;
+}
+function highlight(line,pat,ci){
+  if(!pat) return esc(line);
+  let out='', i=0; const L=ci?line.toLowerCase():line, p=ci?pat.toLowerCase():pat;
+  while(i<line.length){ const idx=L.indexOf(p,i); if(idx<0){ out+=esc(line.slice(i)); break; }
+    out+=esc(line.slice(i,idx))+'<span class="green">'+esc(line.slice(idx,idx+pat.length))+'</span>'; i=idx+pat.length; }
+  return out;
+}
+function printGrep(text, pat, ci){
+  const hits=String(text).split('\n').filter(l=> (ci?l.toLowerCase():l).includes(ci?pat.toLowerCase():pat));
+  if(!hits.length) return;              // grep is silent when nothing matches
+  printPre(hits.map(l=>highlight(l,pat,ci)).join('\n'));
+}
+function grepRun(rest){
+  const toks=(rest||'').trim().match(/(?:"[^"]*"|\S)+/g)||[];
+  let ci=false; const args=[];
+  toks.forEach(t=>{ if(t==='-i'||t==='-in'||t==='-ni'){ ci=true; } else args.push(t.replace(/^"|"$/g,'')); });
+  const pat=args[0], file=args[1];
+  if(pat===undefined||file===undefined){ printOne('amber','usage: grep [-i] <pattern> <file>   (or: cat <file> | grep <pattern>)'); return; }
+  const n=fsNode(fsResolve(file));
+  if(!n){ printOne('red',`grep: ${esc(file)}: No such file or directory`); return; }
+  if(n.t==='d'){ printOne('red',`grep: ${esc(file)}: Is a directory`); return; }
+  printGrep(n.x, pat, ci);
+}
+
+/* the four commands that were only decoration in .bash_history — now they do something */
+function sshRun(rest){
+  const host=(rest||'').trim().split(/\s+/)[0]||'';
+  if(!host){ printOne('amber','usage: ssh <host>'); return; }
+  const h=esc(host);
+  printPre(
+    `Connecting to <span class="cyan">${h}</span> (10.10.0.2:22)...\n`+
+    `The authenticity of host '${h}' can't be established.\n`+
+    `ED25519 key fingerprint is SHA256:9zQ4m2Xv+Kd1p8sJ0rN7bWqLtY3cF6eHgA5uI (match in known_hosts)\n`+
+    `<span class="green">Authenticated with publickey.</span>\n`+
+    `Last login: ${esc(new Date().toUTCString())} from 10.10.0.14\n`+
+    `<span class="muted">────────────────────────────────────────────</span>\n`+
+    `  <span class="cyan">${h}</span> · jump host · <span class="green">access logged</span>\n`+
+    `<span class="muted">────────────────────────────────────────────</span>\n`+
+    `craig@${h}:~$ <span class="muted">(static readout — no real connection is made)</span>`
+  );
+}
+function tailRun(rest){
+  const toks=(rest||'').trim().split(/\s+/).filter(Boolean);
+  const follow=toks.includes('-f'); const file=toks.filter(t=>!t.startsWith('-')).pop();
+  if(!file){ printOne('amber','usage: tail [-f] <file>'); return; }
+  const n=fsNode(fsResolve(file));
+  if(!n){ printOne('red',`tail: cannot open '${esc(file)}' for reading: No such file or directory`); return; }
+  if(n.t==='d'){ printOne('red',`tail: error reading '${esc(file)}': Is a directory`); return; }
+  let out=String(n.x).split('\n').slice(-10).map(esc).join('\n');
+  if(follow){ out+=`\n<span class="muted">… following ${esc(file)} — static demo, no live tail</span>`; }
+  printPre(out);
+}
+function pacmanRun(){
+  printPre(
+    `:: Synchronizing package databases...\n`+
+    ` core         is up to date\n`+
+    ` extra        is up to date\n`+
+    ` community    is up to date\n`+
+    `:: Starting full system upgrade...\n`+
+    ` <span class="green">there is nothing to do</span> — system is current`
+  );
+}
+function sudoRun(rest){
+  const r=(rest||'').trim(); const h=(r.split(/\s+/)[0]||'').toLowerCase();
+  if(!r){ printOne('amber','usage: sudo <command>   (try: sudo hire-craig)'); return; }
+  if(h==='pacman'){ return pacmanRun(); }
+  if(h==='hire-craig'){ return hireDino(); }
+  if(h==='rm'){ return rmTool(r.replace(/^rm\b\s*/i,'')); }
+  if(h==='apt'||h==='apt-get'||h==='yum'||h==='dnf'){ printPre(`<span class="muted">this box runs Arch — try:</span> sudo pacman -Syu`); return; }
+  printPre(`[sudo] password for craig: <span class="muted">(demo — authentication skipped)</span>\nsudo: ${esc(r.split(/\s+/)[0])}: command not found`);
+}
+function mikrotikExport(rest){
+  const exportText =
+`# ${new Date().toISOString().slice(0,10)} RouterOS 7.16 on CRS610 (EVO)
+# sensitive values (passwords, PSKs, SNMP communities) are NOT exported
+/interface bridge
+add name=bridge-core vlan-filtering=yes
+/interface vlan
+add interface=bridge-core name=vlan10 vlan-id=10
+add interface=bridge-core name=vlan20 vlan-id=20
+/ip address
+add address=10.10.10.1/24 interface=vlan10
+add address=10.10.20.1/24 interface=vlan20
+/ip firewall filter
+add chain=forward action=drop comment="deny inter-VLAN by default"
+/snmp
+set enabled=yes contact=craig
+/system identity
+set name=core-rtr`;
+  const m=(rest||'').trim().match(/>\s*([A-Za-z0-9._-]+)/);
+  if(m){
+    const fname=m[1]; const node=fsNode(cwd);
+    if(node&&node.t==='d'){ node.c[fname]={t:'f',x:exportText}; }
+    printPre(`<span class="muted"># configuration exported to</span> <span class="green">${esc(fname)}</span> <span class="muted">— open it with</span> cat ${esc(fname)}`);
+  } else { printPre(esc(exportText)); }
+}
+function echoRun(rest){
+  const s=(rest||'').replace(/^"([\s\S]*)"$/,'$1').replace(/^'([\s\S]*)'$/,'$1');
+  printOne('muted', expandVars(s));
+}
+function unameRun(rest){
+  const a=/(^|\s)-a\b/.test(rest||'');
+  printOne('muted', a ? 'Linux portfolio 6.9.0-craig #1 SMP PREEMPT x86_64 GNU/Linux' : 'Linux');
+}
+function idCmd(){ printOne('muted','uid=1000(craig) gid=1000(craig) groups=1000(craig),10(wheel),998(network)'); }
+function envCmd(){ printPre(esc(envText())); }
+function historyCmd(){ printPre(esc(histText())); }
+const MANPAGES={
+  ls:"LS(1)\n\nNAME\n    ls — list directory contents\n\nSYNOPSIS\n    ls [-a] [-l] [path]\n\nDESCRIPTION\n    Lists files. -a also shows hidden dotfiles; -l uses the long format.",
+  cd:"CD(1)\n\nNAME\n    cd — change the working directory\n\nSYNOPSIS\n    cd [path]\n\nDESCRIPTION\n    Move around: cd /, cd .., cd ~, cd projects, cd /var/log.",
+  cat:"CAT(1)\n\nNAME\n    cat — print a file to the screen\n\nSYNOPSIS\n    cat <file>",
+  grep:"GREP(1)\n\nNAME\n    grep — search text for a pattern\n\nSYNOPSIS\n    grep [-i] <pattern> <file>\n    <command> | grep <pattern>\n\nDESCRIPTION\n    Prints matching lines; -i ignores case. Works after a pipe from cat, ls, history, echo or env.",
+  ssh:"SSH(1)\n\nNAME\n    ssh — (demo) open a shell on a remote host\n\nSYNOPSIS\n    ssh <host>",
+  tail:"TAIL(1)\n\nNAME\n    tail — show the end of a file\n\nSYNOPSIS\n    tail [-f] <file>",
+  echo:"ECHO(1)\n\nNAME\n    echo — print a line of text\n\nSYNOPSIS\n    echo <text>\n\nDESCRIPTION\n    Expands variables: $USER $HOME $PWD $SHELL $HOSTNAME $PATH.",
+  history:"HISTORY(1)\n\nNAME\n    history — show the commands you have run\n\nSYNOPSIS\n    history\n\nDESCRIPTION\n    Tip: !! repeats your last command.",
+  "mikrotik-export":"MIKROTIK-EXPORT(1)\n\nNAME\n    mikrotik-export — (demo) export a RouterOS config\n\nSYNOPSIS\n    mikrotik-export [> file]\n\nDESCRIPTION\n    Prints a sanitized config; with > file it saves to that file. Secrets are never exported.",
+  pacman:"PACMAN(8)\n\nNAME\n    pacman — package manager\n\nSYNOPSIS\n    sudo pacman -Syu",
+  resume:"RESUME(1)\n\nNAME\n    resume — view or download my resume (PDF)\n\nSYNOPSIS\n    resume",
+};
+function manRun(rest){
+  const name=(rest||'').trim().split(/\s+/)[0]||'';
+  if(!name){ printOne('amber','What manual page do you want?  e.g. man ls'); return; }
+  const k=name.toLowerCase();
+  if(MANPAGES[k]){ printPre(esc(MANPAGES[k])); } else { printOne('red',`No manual entry for ${esc(name)}`); }
+}
+/* `sudo rm -rf /` easter egg — a funny "deletion" readout, a glitch, then a reboot.
+   Nothing is actually deleted (the FS is in-memory and untouched); no network, no eval. */
+function rmTool(rest){
+  const r=rest||''; const flags=(r.match(/-\S+/g)||[]).join('').toLowerCase();
+  const recursive=/r/.test(flags)||/--recursive/.test(r);
+  const force=/f/.test(flags)||/--force/.test(r);
+  if(recursive&&force) return rmRf();
+  printOne('muted','rm: this filesystem is read-only — nothing can actually be deleted (static site).');
+}
+function rmRf(){
+  const gen=animGen;
+  try{ log.innerHTML=''; pinnedTop=null; }catch(e){}
+  const seq=[
+    ['red',   "rm: it is dangerous to operate recursively on '/'"],
+    ['red',   "rm: ...doing it anyway. hold my coffee."],
+    ['muted', ""],
+    ['green', "removing /bin .............................. done"],
+    ['green', "removing /etc .............................. done"],
+    ['green', "removing /home/craig/retail_career ......... done"],
+    ['green', "removing /home/craig/impostor_syndrome ..... done"],
+    ['green', "removing /var/log/evidence ................. done"],
+    ['amber', "removing /dev/null ......................... wait, that's not how this works"],
+    ['muted', ""],
+    ['red',   "SYSTEM INTEGRITY ................ 0%"],
+    ['muted', ""],
+    ['cyan',  "just kidding. nothing here can actually be deleted."],
+    ['muted', "(it's a static site — your machine is safe, and so is mine.)"],
+    ['amber', "rebooting"],
+  ];
+  let i=0;
+  (function next(){
+    if(gen!==animGen) return;                 // a new command took over — abort
+    if(i<seq.length){ const row=seq[i++]; printOne(row[0], row[1]); setTimeout(next, reduceMotion?45:190); return; }
+    if(reduceMotion){ setTimeout(()=>{ if(gen===animGen) runBoot(); }, 500); return; }
+    glitchThenReboot(gen);
+  })();
+}
+function glitchThenReboot(gen){
+  const ov=document.createElement('div'); ov.className='rm-glitch';
+  ov.innerHTML='<div><div class="rm-glitch-txt">KERNEL PANIC</div><div class="rm-glitch-sub">// just kidding — rebooting portfolio //</div></div>';
+  document.body.appendChild(ov);
+  setTimeout(()=>{ try{ ov.remove(); }catch(e){} if(gen===animGen) runBoot(); }, 1400);
+}
+
+/* ---- bash-style Tab completion: commands as the first word, file/dir paths as arguments ----
+   Operates only on the in-memory FS above; no network, no eval. */
+function commonPrefix(arr){ if(!arr.length)return''; let p=arr[0];
+  for(const s of arr){ let i=0; while(i<p.length&&i<s.length&&p[i]===s[i])i++; p=p.slice(0,i); if(!p)break; } return p; }
+function cmdNameList(){ return Array.from(new Set([...Object.keys(COMMANDS), ...Object.keys(TOOLS), ...COMPLETIONS])).filter(n=>n && !n.includes(' ')); }
+function pathComplete(frag){
+  const slash=frag.lastIndexOf('/');
+  const dirPart = slash>=0 ? frag.slice(0,slash+1) : '';
+  const base    = slash>=0 ? frag.slice(slash+1) : frag;
+  const dirParts = dirPart==='' ? cwd.slice() : fsResolve(dirPart);
+  const node=fsNode(dirParts);
+  if(!node||node.t!=='d') return {matches:[],dirPart,base,node:null};
+  let names=Object.keys(node.c);
+  if(!base.startsWith('.')) names=names.filter(n=>!n.startsWith('.'));   // dotfiles only when you type a leading '.'
+  const matches=names.filter(n=>n.startsWith(base)).sort((a,z)=>a.localeCompare(z));
+  return {matches,dirPart,base,node};
+}
+function printCandidates(names, node){
+  const html=names.map(n=>{ const ch=node&&node.c[n]; const dir=ch&&ch.t==='d'; const cls=dir?'cyan':(/\.(sh|ps1)$/.test(n)?'green':'muted');
+    return `<span class="${cls}" style="display:inline-block;margin:0 18px 2px 0">${esc(dir?n+'/':n)}</span>`; }).join('');
+  log.appendChild(el(`<div style="line-height:1.8">${html}</div>`)); scrollDown();
+}
+function finishComplete(prefix, token, matches, node){
+  if(!matches.length) return;
+  if(matches.length===1){ const only=matches[0]; const ch=node&&node.c[only]; const dir=ch&&ch.t==='d';
+    input.value=prefix+only+(dir?'/':' '); moveCaretEnd(); return; }      // dir → '/', file/command → ' '
+  const cp=commonPrefix(matches);
+  if(cp.length>token.length){ input.value=prefix+cp; moveCaretEnd(); }     // extend to the shared prefix
+  else { printCandidates(matches, node); }                                 // nothing more to extend → list them
+}
+function handleTab(){
+  const val=input.value; if(!val) return;
+  if(!/\s/.test(val)){                              // still on the first word → complete a command name
+    const base=val.toLowerCase();
+    const names=cmdNameList().filter(n=>n.startsWith(base)).sort((a,z)=>a.localeCompare(z));
+    finishComplete('', val, names, null); return;
+  }
+  const first=val.trim().split(/\s+/)[0].toLowerCase();
+  const frag=(val.match(/(\S*)$/)||['',''])[1];     // the token under the cursor
+  const keep=val.slice(0, val.length-frag.length);  // everything before it, preserved verbatim
+  if(first==='sudo' && !frag.includes('/')){        // handy: complete sudo sub-commands
+    const subs=['hire-craig','pacman','rm','make'].filter(s=>s.startsWith(frag.toLowerCase())).sort();
+    finishComplete(keep, frag, subs, null); return;
+  }
+  const pc=pathComplete(frag);                       // everything else → file/dir path completion
+  finishComplete(keep+pc.dirPart, pc.base, pc.matches, pc.node);
+}
+
+/* these new commands/tools are registered directly in the TOOLS and COMMANDS
+   object literals (search "ls: cmdLs" and "tree: cmdTree") — the functions above
+   are hoisted, so the literals can reference them even though they appear later. */
 
 /* ------------------------- command router -------------------------------- */
 const COMMANDS = {
@@ -1110,17 +1387,33 @@ const COMMANDS = {
   secret: renderSecret, secrets: renderSecret,
   topology: renderTopology, network: renderTopology, netmap: renderTopology, topo: renderTopology,
   tree: cmdTree, pwd: cmdPwd,
+  history: historyCmd, id: idCmd, env: envCmd,
   date: ()=> printOne('muted', new Date().toString()),
   coffee: coffee, 'sudo make coffee': coffee, 'make coffee': coffee,
   exit: noExit, logout: noExit, quit: noExit,
 };
-const COMPLETIONS = ['help','about','skills','projects','sysadmin','timeline','creds','resume','cv','contact','tools','clear','banner','whoami','reboot','tools','casestudy','phishing','subnet','mac','port','hash','base64','passcheck','genpass','morse','uuid','epoch','cron','calc','color','cowsay','neofetch','nmap','ping','coffee','pwd','date','secret','topology','network','netmap','topo','ls','cd','cat','tree','sudo hire-craig'];
+const COMPLETIONS = ['help','about','skills','projects','sysadmin','timeline','creds','resume','cv','contact','tools','clear','banner','whoami','reboot','tools','casestudy','phishing','subnet','mac','port','hash','base64','passcheck','genpass','morse','uuid','epoch','cron','calc','color','cowsay','neofetch','nmap','ping','coffee','pwd','date','secret','topology','network','netmap','topo','ls','cd','cat','tree','grep','history','man','echo','ssh','tail','uname','env','id','sudo hire-craig'];
 
 function run(raw){
   const cmd = raw.trim(); if(!cmd) return;
+  // !! — repeat the last command (bash history expansion)
+  if(cmd==='!!'){ if(history.length){ run(history[0]); } else { echoCommand(cmd); printOne('amber','!!: event not found'); } return; }
   echoCommand(cmd);
   history.unshift(cmd); histPtr=-1;
   animGen++;   // invalidate any animation still running from the previous command
+  // simple pipe: PRODUCER | grep PATTERN  (producers: cat, ls, history, echo, env)
+  if(cmd.includes('|')){
+    const i=cmd.indexOf('|'); const left=cmd.slice(0,i).trim(); const right=cmd.slice(i+1).trim();
+    const rparts=right.split(/\s+/); const rhead=(rparts[0]||'').toLowerCase();
+    if(rhead!=='grep'){ printOne('amber','pipe: only “… | grep <pattern>” is supported here'); return; }
+    let rrest=right.slice(rparts[0].length).trim(); let ci=false;
+    if(/^-i\b/.test(rrest)){ ci=true; rrest=rrest.replace(/^-i\b\s*/,''); }
+    const pat=rrest.replace(/^["']|["']$/g,'');
+    const text=textOf(left);
+    if(text===null){ printOne('red',`${esc((left.split(/\s+/)[0]||''))}: cannot pipe (unsupported source or no output)`); return; }
+    if(!pat){ printOne('amber','usage: … | grep <pattern>'); return; }
+    printGrep(text, pat, ci); return;
+  }
   const key = cmd.toLowerCase();
   const parts = cmd.split(/\s+/);
   const head = parts[0].toLowerCase();
@@ -1142,11 +1435,7 @@ input.addEventListener('keydown', e=>{
     if(history.length){ histPtr=Math.min(histPtr+1,history.length-1); input.value=history[histPtr]; moveCaretEnd(); } }
   else if(e.key==='ArrowDown'){ e.preventDefault();
     if(histPtr>0){ histPtr--; input.value=history[histPtr]; } else { histPtr=-1; input.value=''; } }
-  else if(e.key==='Tab'){ e.preventDefault();
-    const v=input.value.toLowerCase();
-    const hit=COMPLETIONS.find(c=>c.startsWith(v) && v);
-    if(hit) input.value=hit;
-  }
+  else if(e.key==='Tab'){ e.preventDefault(); handleTab(); }
 });
 function moveCaretEnd(){ const v=input.value; input.value=''; input.value=v; updateCursor(); }
 

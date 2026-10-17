@@ -396,6 +396,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #boot::-webkit-scrollbar, #boo
 
 /* Konami-code glitch flash */
 @keyframes konflash { 0%,100%{ filter:none } 50%{ filter: hue-rotate(150deg) saturate(1.7) } }
+/* ---- sudo rm -rf easter-egg glitch ---- */
+@keyframes rmShake { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-3px,2px)} 40%{transform:translate(3px,-2px)} 60%{transform:translate(-2px,-1px)} 80%{transform:translate(2px,1px)} }
+@keyframes rmFlick { 0%,100%{opacity:1} 50%{opacity:.78} 77%{opacity:.92} }
+.rm-glitch{ position:fixed; inset:0; z-index:9999; background:#05070a; display:flex; align-items:center; justify-content:center;
+  overflow:hidden; animation: rmFlick .16s steps(2,end) infinite; }
+.rm-glitch::before{ content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px); }
+.rm-glitch-txt{ font-family:var(--font-mono); font-weight:800; letter-spacing:4px; color:#ff2a46; text-align:center;
+  font-size: clamp(24px, 9vw, 92px); line-height:1.2; text-shadow: 2px 0 #38e8ff, -2px 0 #39ff93; animation: rmShake .11s infinite; }
+.rm-glitch-sub{ font-family:var(--font-mono); font-size: clamp(11px,2.4vw,15px); color:#39ff93; margin-top:14px; letter-spacing:1px; text-shadow:none; animation:none; }
+@media (prefers-reduced-motion: reduce){ .rm-glitch, .rm-glitch-txt{ animation:none !important; } }
 body.konami { animation: konflash .4s ease 2; }
 
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0;}
