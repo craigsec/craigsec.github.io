@@ -498,6 +498,13 @@ function hireDino(){
   typeInto($('#hiremsg'), msg, 22);
 }
 $('#hireclose').addEventListener('click', ()=>$('#hire').classList.remove('show'));
+// dismiss the hire overlay with Enter or Escape — capture phase so it beats the input's Enter handler (no command runs)
+document.addEventListener('keydown', e=>{
+  const hire=$('#hire');
+  if(hire && hire.classList.contains('show') && (e.key==='Enter' || e.key==='Escape')){
+    e.preventDefault(); e.stopPropagation(); hire.classList.remove('show');
+  }
+}, true);
 
 function addChips(container, names){
   names.forEach(n=>{
