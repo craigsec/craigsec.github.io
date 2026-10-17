@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    ★ EDIT YOUR CONTENT HERE ★
    Everything personal lives in the DATA object below. Swap the placeholder
-   text (marked «like this» / [PLACEHOLDER]) for real details. No other part
+   text (clearly marked in the data below) for real details. No other part
    of the script needs changing to update content.
    ========================================================================== */
 const DATA = {
@@ -527,7 +527,7 @@ function cascadeLines(rows){
   }).join('');
   log.appendChild(el(html)); scrollDown();
 }
-function printOne(cls, text){ log.appendChild(el(`<span class="${cls}" style="white-space:pre-wrap">${esc(text)}</span>`)); scrollDown(); }
+function printOne(cls, text){ log.appendChild(el(`<span class="${cls}" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(text)}</span>`)); scrollDown(); }
 
 function renderNeofetch(){
   const d=DATA.identity;
@@ -1119,7 +1119,7 @@ function cmdCat(arg){ const t=(arg||'').trim(); if(!t){ printOne('amber','usage:
   const parts=fsResolve(t); const node=fsNode(parts);
   if(!node){ printOne('red',`cat: ${esc(t)}: no such file or directory`); return; }
   if(node.t==='d'){ printOne('red',`cat: ${esc(t)}: is a directory`); return; }
-  log.appendChild(el(`<div class="muted" style="white-space:pre-wrap">${esc(node.x)}</div>`)); scrollDown(); }
+  log.appendChild(el(`<div class="muted" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(node.x)}</div>`)); scrollDown(); }
 function cmdPwd(){ printOne('muted', fsPath(cwd)==='~' ? '/home/craig' : fsPath(cwd).replace(/^~/,'/home/craig')); }
 function cmdTree(){ const node=fsNode(cwd), lines=[];
   (function walk(n,pre){ const names=Object.keys(n.c).sort((a,z)=>a.localeCompare(z));
@@ -1130,7 +1130,7 @@ function cmdTree(){ const node=fsNode(cwd), lines=[];
 /* ---------------- extra shell realism (all local, no network, output escaped) ----------------
    Everything here is a static readout or operates on the in-memory FS above.
    No fetch/XHR, no eval, no secrets — matches the page's locked-down CSP. */
-function printPre(html){ log.appendChild(el(`<div class="muted" style="white-space:pre-wrap;line-height:1.55">${html}</div>`)); scrollDown(); }
+function printPre(html){ log.appendChild(el(`<div class="muted" style="white-space:pre-wrap;line-height:1.55;overflow-wrap:anywhere">${html}</div>`)); scrollDown(); }
 function absPwd(){ const p=fsPath(cwd); return p==='~' ? '/home/craig' : p.replace(/^~/,'/home/craig'); }
 function expandVars(s){
   const map={ USER:'craig', LOGNAME:'craig', HOME:'/home/craig', SHELL:'/bin/bash', HOSTNAME:'portfolio',
