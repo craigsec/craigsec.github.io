@@ -317,7 +317,7 @@ code.inl { background:#0e1a1a; border:1px solid var(--line); padding:1px 5px; bo
 #runbtn { display:none; }
 
 /* command bar — persistent shortcuts, pinned at the bottom on desktop and mobile */
-#mobile-cmds { display:grid; grid-template-columns: repeat(auto-fill, minmax(104px,1fr));
+#mobile-cmds { display:grid; grid-template-columns: repeat(6, minmax(0,1fr));
   gap:8px; max-width:900px; margin:10px auto 0; }
 #mobile-cmds button { background:var(--bg-panel-2); border:1px solid var(--line); color:var(--cyan); text-align:center;
   font-family:var(--font-mono); font-size:12.5px; padding:9px 10px; border-radius:7px; cursor:pointer; letter-spacing:.5px;
@@ -327,7 +327,7 @@ code.inl { background:#0e1a1a; border:1px solid var(--line); padding:1px 5px; bo
   box-shadow:var(--glow-cyan); transform:translateY(-1px); outline:none; }
 #mobile-cmds button:active { transform:translateY(0); box-shadow:none; }
 @media (max-width: 680px){
-  #mobile-cmds { grid-template-columns: repeat(auto-fill, minmax(74px,1fr)); gap:7px; }
+  #mobile-cmds { grid-template-columns: repeat(4, minmax(0,1fr)); gap:7px; }
   #mobile-cmds button{ padding:11px 6px; font-size:12px; letter-spacing:.3px; border-radius:8px; }
   #bar .stat.hide-sm{display:none;}
 }
