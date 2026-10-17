@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src https://api.ipify.org; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Constantinos // Terminal Resume</title>
 <meta name="description" content="An interactive resume built as a Linux terminal — type commands to explore my IT, sysadmin & security background.">
 <meta name="theme-color" content="#0a0f14">
@@ -575,7 +577,6 @@ const DATA = {
 
   contact: [
     { ic: "email",    val: "constantinoscraig@gmail.com",   href: "mailto:constantinoscraig@gmail.com" },
-    { ic: "phone",    val: "6972-485-947",                  href: "tel:+306972485947" },
     { ic: "linkedin", val: "linkedin.com/in/constantinoscraig", href: "https://www.linkedin.com/in/constantinoscraig" },
     { ic: "location", val: "Athens, Greece",                href: "https://www.google.com/maps/search/?api=1&query=Athens,Greece" },
   ],
@@ -853,7 +854,7 @@ function renderContact(){
     for(const c of DATA.contact){
       const row=document.createElement('div'); row.className='ln';
       row.innerHTML=`<span class="ic">${esc(c.ic)}</span>
-        <a href="${esc(c.href)}" target="_blank" rel="noopener"><span class="v"></span></a>
+        <a href="${esc(c.href)}" target="_blank" rel="noopener noreferrer"><span class="v"></span></a>
         <button class="copybtn" data-copy="${esc(c.val)}">copy</button>`;
       body.appendChild(row);
       await typeInto(row.querySelector('.v'), c.val, 10); scrollDown();
@@ -1166,11 +1167,27 @@ async function myipTool(){
     cascadeLines([['cyan','// myip'],['green',`public IP ... ${j.ip}`],['muted','(resolved client-side via ipify)']]);
   }catch(e){ printOne('red','myip: could not reach the lookup service (offline or blocked).'); }
 }
+/* safe arithmetic evaluator — recursive descent, no eval or dynamic code,
+   so the page runs under a CSP that forbids 'unsafe-eval'. */
+function safeCalc(expr){
+  const toks = expr.match(/\d+\.?\d*|\.\d+|[-+*/%()]/g);
+  if(!toks) throw 0;
+  let i=0; const peek=()=>toks[i], next=()=>toks[i++];
+  function sum(){ let v=term(); while(peek()==='+'||peek()==='-'){ const o=next(), r=term(); v=o==='+'?v+r:v-r; } return v; }
+  function term(){ let v=fac(); while(peek()==='*'||peek()==='/'||peek()==='%'){ const o=next(), r=fac(); v=o==='*'?v*r:o==='/'?v/r:v%r; } return v; }
+  function fac(){
+    if(peek()==='-'){ next(); return -fac(); }
+    if(peek()==='+'){ next(); return fac(); }
+    if(peek()==='('){ next(); const v=sum(); if(next()!==')') throw 0; return v; }
+    const t=next(); const n=parseFloat(t); if(t===undefined || isNaN(n)) throw 0; return n;
+  }
+  const r=sum(); if(i!==toks.length) throw 0; return r;
+}
 function calcTool(arg){
   arg=(arg||'').trim();
   if(!arg){ printOne('amber','usage: calc <expression>   e.g. calc (1024*8)/1000'); return; }
   if(!/^[-+*/%.()0-9\s]+$/.test(arg)){ printOne('red','calc: only numbers and + - * / % ( ) allowed.'); return; }
-  try{ const r=Function('"use strict";return ('+arg+')')();
+  try{ const r=safeCalc(arg);
     if(typeof r!=='number' || !isFinite(r)){ printOne('red','calc: invalid expression.'); return; }
     cascadeLines([['cyan',`// calc ${arg}`],['green',String(r)]]);
   }catch(e){ printOne('red','calc: invalid expression.'); }
@@ -1449,7 +1466,7 @@ function renderTopology(){
 /* ---------------- explorable filesystem (ls / cd / cat / tree) ---------------- */
 const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
   'readme.txt':{t:'f',x:"Constantinos Craig — IT Operations Engineer\n\nYou're poking around the filesystem. Nice instinct.\nTry: ls, cd projects, cat contact.txt, tree\nHidden files exist. ls -a won't help you, but curiosity will."},
-  'contact.txt':{t:'f',x:"email      constantinoscraig@gmail.com\nlinkedin   linkedin.com/in/constantinoscraig\nlocation   Athens, Greece\nphone      +30 6972-485-947"},
+  'contact.txt':{t:'f',x:"email      constantinoscraig@gmail.com\nlinkedin   linkedin.com/in/constantinoscraig\nlocation   Athens, Greece"},
   projects:{t:'d',c:{
     'car-rental.md':{t:'f',x:"# Car Rental IT & Surveillance — Lubbock, TX (2024)\nVPN tunnel (site<->home), Hikvision NVR on a Proxmox VM, VLAN-isolated\ncameras, Synology NAS, UPS, dynamic DNS. The build that moved me into IT."},
     'enterprise-floor.md':{t:'f',x:"# Enterprise Floor Build-out — Athens (2025)\nPart of the team that stood up a 149-workstation floor + server room.\nHardware, cabling, endpoint installs, network validation, access control."},
