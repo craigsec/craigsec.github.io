@@ -34,6 +34,23 @@ const DATA = {
   // Featured projects — rendered as cards, in order.
   projects: [
     {
+      title: "EMAIL ANALYZER",
+      tag: "designed & built · open source · 2026",
+      summary: "A Windows desktop tool that checks a suspicious email or attachment and says, in plain language, whether it is safe to open. Nothing is opened, run, or visited on the machine.",
+      demonstrates: [
+        "Sender checks: spoofed display names, mismatched reply-to addresses, lookalike domains, and SPF/DKIM/DMARC results explained in plain words",
+        "Link checks: anchor text that hides a different address, and QR codes buried inside PDFs and images",
+        "Attachment inspection, including files nested in ZIPs and Office documents: macros, remote template injection, HTML smuggling, double extensions",
+        "A 0-100 risk score with a readable reason for every point, from fixed rules that give the same answer every time",
+        "Offline by default, with optional urlscan.io and VirusTotal lookups",
+        "English and Greek interface, light and dark themes, and an offline installer",
+      ],
+      ethics: "Grew from a one-off QR-code checker into a full email, link, and attachment analyzer, built out one real phishing report at a time.",
+      stack: "Python · CustomTkinter · PowerShell · Inno Setup · pytest",
+      note: "",
+      link: "https://github.com/craigsec/email-analyzer",
+    },
+    {
       title: "CAR RENTAL IT & SURVEILLANCE",
       tag: "designed & built · Lubbock, Texas · 2024",
       summary: "Set up the on-site IT for a Turo car-rental operation: secure remote access, surveillance, and storage. (Turo handled the bookings and payments; the infrastructure was mine.)",
@@ -376,6 +393,7 @@ function renderProjects(){
   const cards = DATA.projects.map(p=>{
     const items=p.demonstrates.map(i=>`<li>${esc(i)}</li>`).join('');
     const noteLine = p.note ? `<div class="ph" style="margin-top:10px">▸ ${esc(p.note)}</div>` : '';
+    const linkLine = p.link ? `<div class="muted" style="margin-top:6px">source: <a href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">${esc(p.link.replace(/^https?:\/\//,''))}</a></div>` : '';
     return `<div class="proj" style="margin-bottom:14px">
        <div class="tag">${esc(p.tag)}</div>
        <h3 class="ptitle" data-scramble>${esc(p.title)}</h3>
@@ -385,6 +403,7 @@ function renderProjects(){
        <div class="ethics"><b class="green">impact:</b> ${esc(p.ethics)}</div>
        <div class="muted">stack: <code class="inl">${esc(p.stack)}</code></div>
        ${noteLine}
+       ${linkLine}
      </div>`;
   }).join('');
   const b=el(`<h2 class="section" data-scramble>// projects — featured</h2>${cards}`);
@@ -1049,6 +1068,7 @@ const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
   'readme.txt':{t:'f',x:"Constantinos Craig — IT Operations Engineer\n\nYou're poking around the filesystem. Nice instinct.\nTry: ls, ls -la, cd /, cat /etc/motd, tree, grep, man ls\nHidden files exist — ls -a reveals them. Curiosity is the right instinct."},
   'contact.txt':{t:'f',x:"email      constantinoscraig@gmail.com\nlinkedin   linkedin.com/in/constantinoscraig\nlocation   Lubbock, TX"},
   projects:{t:'d',c:{
+    'email-analyzer.md':{t:'f',x:"# Email Analyzer — open source (2026)\nWindows tool that checks emails, attachments, links and QR codes for phishing.\nFixed readable rules, 0-100 risk score, offline by default.\nSource: github.com/craigsec/email-analyzer"},
     'car-rental.md':{t:'f',x:"# Car Rental IT & Surveillance — Lubbock, TX (2024)\nVPN tunnel (site<->home), Hikvision NVR on a Proxmox VM, VLAN-isolated\ncameras, Synology NAS, UPS, dynamic DNS. The build that moved me into IT."},
     'enterprise-floor.md':{t:'f',x:"# Enterprise Floor Build-out — Athens (2025)\nPart of the team that stood up a 149-workstation floor + server room.\nHardware, cabling, endpoint installs, network validation, access control."},
   }},
