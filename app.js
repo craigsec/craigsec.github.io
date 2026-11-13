@@ -27,8 +27,8 @@ const DATA = {
     "I came in the practical way: self-taught the fundamentals, built real",
     "systems from the ground up, and moved into IT full time from there.",
     "",
-    "Defensive security focused. ISC2 Certified in Cybersecurity (CC),",
-    "CompTIA Security+, and Google Cybersecurity certified.",
+    "Defensive security focused. ISC2 Certified in Cybersecurity (CC)",
+    "and Google Cybersecurity certified.",
   ],
 
   // Featured projects — rendered as cards, in order.
@@ -140,7 +140,6 @@ const DATA = {
   // Credentials — certifications, education, languages (shown by the `creds` command).
   credentials: {
     certs: [
-      "CompTIA Security+ · 2024",
       "ISC2 Certified in Cybersecurity (CC) · ISC2 (2024–2027)",
       "Google Cybersecurity Certificate · Google (2024)",
       "Google IT Support Certificate · Google (2024)",
@@ -1073,7 +1072,6 @@ const FS = { home:{t:'d',c:{ craig:{t:'d',c:{
     'enterprise-floor.md':{t:'f',x:"# Enterprise Floor Build-out — Athens (2025)\nPart of the team that stood up a 149-workstation floor + server room.\nHardware, cabling, endpoint installs, network validation, access control."},
   }},
   certs:{t:'d',c:{
-    'security-plus.txt':{t:'f',x:"CompTIA Security+  —  2024"},
     'isc2-cc.txt':{t:'f',x:"ISC2 Certified in Cybersecurity (CC)  —  2024"},
     'google-cyber.txt':{t:'f',x:"Google Cybersecurity Certificate  —  2024"},
     'google-it.txt':{t:'f',x:"Google IT Support Certificate  —  2024"},
